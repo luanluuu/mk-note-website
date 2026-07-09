@@ -1,0 +1,111 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #e9ecef 100%);
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin: 0 0 1rem;
+  color: #111;
+}
+
+.tagline {
+  font-size: 1.25rem;
+  color: #495057;
+  margin-bottom: 2rem;
+}
+
+.download-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.9rem 1.8rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.btn-primary {
+  background: #212529;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #212529;
+  border: 1px solid #dee2e6;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #868e96;
+  margin-bottom: 1.5rem;
+}
+
+.github-link {
+  color: #495057;
+  text-decoration: none;
+  border-bottom: 1px solid #adb5bd;
+}
+
+.github-link:hover {
+  color: #212529;
+  border-color: #212529;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.feature {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.feature h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.feature p {
+  margin: 0;
+  color: #495057;
+}
+
+.footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #868e96;
+  font-size: 0.875rem;
+}
