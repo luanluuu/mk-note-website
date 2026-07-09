@@ -23,6 +23,35 @@ function useTheme() {
   return { theme, toggle }
 }
 
+function useScrollY() {
+  const [scrollY, setScrollY] = useState(0)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        setScrollY(y)
+        setProgress(max > 0 ? y / max : 0)
+        raf = 0
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  return { scrollY, progress }
+}
+
 function useScrollReveal() {
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -30,6 +59,9 @@ function useScrollReveal() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('is-visible')
+          } else {
+            // 离开视口时移除类，再次进入时重新触发动画
+            entry.target.classList.remove('is-visible')
           }
         })
       },
@@ -38,6 +70,14 @@ function useScrollReveal() {
     document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [])
+}
+
+function ScrollProgress({ progress }: { progress: number }) {
+  return (
+    <div className="scroll-progress" aria-hidden="true">
+      <div className="scroll-progress__bar" style={{ transform: `scaleX(${progress})` }} />
+    </div>
+  )
 }
 
 function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
@@ -91,9 +131,13 @@ function FeatureCard({
   )
 }
 
-function MockWindow() {
+function MockWindow({ scrollY }: { scrollY: number }) {
+  const offset = scrollY * 0.06
   return (
-    <div className="mock-window reveal">
+    <div
+      className="mock-window reveal"
+      style={{ transform: `translateY(${offset}px)` }}
+    >
       <div className="mock-window__bar">
         <span className="mock-window__dot" />
         <span className="mock-window__dot" />
@@ -146,6 +190,7 @@ function MockWindow() {
 
 function App() {
   const { theme, toggle } = useTheme()
+  const { scrollY, progress } = useScrollY()
   const [os, setOs] = useState<'mac' | 'win' | 'other'>('other')
   useScrollReveal()
 
@@ -157,6 +202,8 @@ function App() {
 
   return (
     <div className="site">
+      <ScrollProgress progress={progress} />
+
       <nav className="topbar">
         <a className="topbar__brand" href="#">
           <span className="topbar__mark" />
@@ -173,13 +220,28 @@ function App() {
 
       <header className="hero">
         <div className="hero__grid" aria-hidden="true">
-          <div className="hero__block hero__block--red" />
-          <div className="hero__block hero__block--blue" />
-          <div className="hero__block hero__block--yellow" />
-          <div className="hero__block hero__block--black" />
+          <div
+            className="hero__block hero__block--red"
+            style={{ transform: `translateY(${scrollY * 0.18}px)` }}
+          />
+          <div
+            className="hero__block hero__block--blue"
+            style={{ transform: `translateY(${scrollY * -0.12}px)` }}
+          />
+          <div
+            className="hero__block hero__block--yellow"
+            style={{ transform: `translateY(${scrollY * 0.28}px)` }}
+          />
+          <div
+            className="hero__block hero__block--black"
+            style={{ transform: `translateY(${scrollY * -0.22}px)` }}
+          />
         </div>
 
-        <div className="hero__content reveal">
+        <div
+          className="hero__content reveal"
+          style={{ transform: `translateY(${scrollY * -0.06}px)` }}
+        >
           <h1 className="hero__title">
             把思绪写成
             <br />
@@ -245,7 +307,7 @@ function App() {
           <span className="section__kicker">界面预览</span>
           <h2 className="section__title">熟悉的笔记工作区</h2>
         </div>
-        <MockWindow />
+        <MockWindow scrollY={scrollY} />
       </section>
 
       <section id="download" className="section section--download">

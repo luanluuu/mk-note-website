@@ -5,6 +5,27 @@
 }
 
 /* ============================================================
+   Scroll progress
+   ============================================================ */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 4px;
+  background: var(--surface-2);
+}
+
+.scroll-progress__bar {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  will-change: transform;
+}
+
+/* ============================================================
    Topbar
    ============================================================ */
 .topbar {
@@ -121,6 +142,7 @@
 .hero__block {
   background: var(--surface);
   animation: blockIn 1s var(--ease) backwards;
+  will-change: transform;
 }
 
 .hero__block--red {
@@ -171,6 +193,7 @@
   background: var(--surface);
   border: var(--grid) solid var(--border);
   box-shadow: var(--shadow-hard-lg);
+  will-change: transform;
 }
 
 .hero__title {
@@ -344,6 +367,7 @@
   border: var(--grid) solid var(--border);
   box-shadow: var(--shadow-hard-lg);
   overflow: hidden;
+  will-change: transform;
 }
 
 .mock-window__bar {
