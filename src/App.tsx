@@ -100,7 +100,7 @@ function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }
       <span className="theme-toggle__track">
         <span className={`theme-toggle__thumb ${theme}`} />
       </span>
-      <span className="theme-toggle__label">{theme === 'light' ? '☀️' : '🌙'}</span>
+      <span className="theme-toggle__label">{theme === 'light' ? 'Light' : 'Dark'}</span>
     </button>
   )
 }
@@ -121,20 +121,32 @@ function DownloadButton({
   )
 }
 
+type IconName = 'doc' | 'ai' | 'search' | 'disk' | 'theme' | 'command'
+
+function GeoIcon({ name }: { name: IconName }) {
+  return (
+    <span className={`geo-icon geo-icon--${name}`} aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </span>
+  )
+}
+
 function FeatureCard({
   icon,
   title,
   desc,
   accent,
 }: {
-  icon: string
+  icon: IconName
   title: string
   desc: string
   accent: 'red' | 'blue' | 'yellow'
 }) {
   return (
     <article className={`feature-card feature-card--${accent} reveal`}>
-      <div className="feature-card__icon">{icon}</div>
+      <GeoIcon name={icon} />
       <h3 className="feature-card__title">{title}</h3>
       <p className="feature-card__desc">{desc}</p>
     </article>
@@ -143,10 +155,10 @@ function FeatureCard({
 
 const EDITOR_LINES = [
   { type: 'h1' as const, text: '项目规划' },
-  { type: 'p' as const, text: '本周重点完成官网设计和 Windows 安装包优化。' },
-  { type: 'li' as const, text: '统一 Mondrian 视觉语言' },
-  { type: 'li' as const, text: '添加交互式功能展示' },
-  { type: 'li' as const, text: '修复 onnxruntime DLL 打包问题' },
+  { type: 'p' as const, text: '把分散想法整理成可执行的项目笔记。' },
+  { type: 'li' as const, text: '沉淀会议结论和待办' },
+  { type: 'li' as const, text: '用 AI 优化段落结构' },
+  { type: 'li' as const, text: '按语义搜索相关资料' },
 ]
 
 const TYPE_SPEED = 45
@@ -154,17 +166,18 @@ const LINE_PAUSE = 600
 
 function TypewriterEditor({ started }: { started: boolean }) {
   const [currentLine, setCurrentLine] = useState(0)
-  const [display, setDisplay] = useState<string[]>(() => EDITOR_LINES.map(() => ''))
+  const [display, setDisplay] = useState<string[]>(() => EDITOR_LINES.map((line) => line.text))
   const [done, setDone] = useState(false)
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (!started) return
     if (currentLine >= EDITOR_LINES.length) {
       setDone(true)
       return
     }
     const text = EDITOR_LINES[currentLine].text
-    let i = 0
+    let i = Math.max(0, text.length - 8)
     const timer = window.setInterval(() => {
       setDisplay((prev) => {
         const next = [...prev]
@@ -210,7 +223,7 @@ function TypewriterEditor({ started }: { started: boolean }) {
   )
 }
 
-function MockWindow({ scrollY }: { scrollY: number }) {
+function MockWindow({ scrollY, compact = false }: { scrollY: number; compact?: boolean }) {
   const offset = scrollY * 0.06
   const editorRef = useRef<HTMLElement>(null)
   const [started, setStarted] = useState(false)
@@ -230,8 +243,8 @@ function MockWindow({ scrollY }: { scrollY: number }) {
 
   return (
     <div
-      className="mock-window reveal"
-      style={{ transform: `translateY(${offset}px)` }}
+      className={`mock-window ${compact ? 'mock-window--compact' : 'reveal'}`}
+      style={compact ? undefined : { transform: `translateY(${offset}px)` }}
     >
       <div className="mock-window__bar">
         <span className="mock-window__dot" />
@@ -263,16 +276,28 @@ function MockWindow({ scrollY }: { scrollY: number }) {
         </aside>
         <main className="mock-editor" ref={editorRef}>
           <div className="mock-editor__toolbar">
-            <span>润色</span>
-            <span>续写</span>
-            <span>摘要</span>
+            <span>优化</span>
+            <span>变体</span>
+            <span>精简</span>
+            <span>翻译</span>
           </div>
           <TypewriterEditor started={started} />
+          <div className="mock-ai-panel" aria-hidden="true">
+            <strong>AI 建议</strong>
+            <span>将目标拆成「背景 / 决策 / 下一步」，并引用项目上下文。</span>
+          </div>
         </main>
       </div>
     </div>
   )
 }
+
+const VALUE_ITEMS = [
+  ['本地文件', '笔记就是 .md 文件，可放进同步盘或 Git 仓库。'],
+  ['本地语义搜索', '不用记关键词，也能找回相近主题的笔记。'],
+  ['AI 写作栏', '优化、变体、精简、翻译直接回写编辑器。'],
+  ['项目上下文', '写笔记时可参考项目内容，减少来回切换。'],
+]
 
 function App() {
   const { theme, toggle } = useTheme()
@@ -302,6 +327,10 @@ function App() {
           <a href={`https://github.com/${REPO}`} target="_blank" rel="noreferrer">GitHub</a>
           <ThemeToggle theme={theme} onToggle={toggle} />
         </div>
+        <div className="topbar__mobile-actions">
+          <a href="#download" className="topbar__download">下载</a>
+          <ThemeToggle theme={theme} onToggle={toggle} />
+        </div>
       </nav>
 
       <header className="hero">
@@ -324,24 +353,31 @@ function App() {
           />
         </div>
 
-        <div
-          className="hero__content reveal"
-          style={{ transform: `translateY(${scrollY * -0.06}px)` }}
-        >
-          <h1 className="hero__title">
-            把思绪写成
-            <br />
-            <span className="hero__title--accent">结构清晰的笔记</span>
-          </h1>
-          <p className="hero__lead">
-            本地优先的 Markdown 笔记应用。支持 AI 辅助写作、语义搜索与多主题切换，所有数据保存在你的电脑上。
-          </p>
-          <div className="hero__actions">
-            <DownloadButton
-              label={os === 'mac' ? '下载 macOS 版' : '下载 Windows 版'}
-              href={latestAssetUrl(os === 'mac' ? RELEASE_ASSETS.mac : RELEASE_ASSETS.win)}
-            />
-            <DownloadButton label="历史版本" href={RELEASES} variant="secondary" />
+        <div className="hero__inner">
+          <div
+            className="hero__content"
+            style={{ transform: `translateY(${scrollY * -0.035}px)` }}
+          >
+            <span className="hero__kicker">LOCAL FIRST / AI READY</span>
+            <h1 className="hero__title">
+              把思绪写成
+              <br />
+              <span className="hero__title--accent">结构清晰的笔记</span>
+            </h1>
+            <p className="hero__lead">
+              本地优先的 Markdown 桌面应用。用 .md 文件保存你的知识库，并把 AI 写作、项目上下文和语义搜索放进同一个工作区。
+            </p>
+            <div className="hero__actions">
+              <DownloadButton
+                label={os === 'mac' ? '下载 macOS 版' : '下载 Windows 版'}
+                href={latestAssetUrl(os === 'mac' ? RELEASE_ASSETS.mac : RELEASE_ASSETS.win)}
+              />
+              <DownloadButton label="历史版本" href={RELEASES} variant="secondary" />
+            </div>
+            <p className="hero__note">开源免费，本地 .md 存储，可接 Ollama 或 OpenAI 兼容 API。</p>
+          </div>
+          <div className="hero__preview">
+            <MockWindow scrollY={0} compact />
           </div>
         </div>
       </header>
@@ -353,41 +389,52 @@ function App() {
         </div>
         <div className="features-grid">
           <FeatureCard
-            icon="📝"
+            icon="doc"
             title="Markdown 编辑"
             desc="基于 Milkdown 的所见即所得编辑器，实时预览、快捷键友好，专注内容本身。"
             accent="blue"
           />
           <FeatureCard
-            icon="🤖"
+            icon="ai"
             title="AI 辅助写作"
-            desc="连接本地 Ollama 或 OpenAI 兼容 API，实现润色、续写、摘要和项目级分析。"
+            desc="连接本地 Ollama 或 OpenAI 兼容 API，实现优化、变体、精简、翻译和项目级分析。"
             accent="red"
           />
           <FeatureCard
-            icon="🔍"
+            icon="search"
             title="语义搜索"
             desc="基于 Transformers.js 的本地嵌入模型，无需联网即可按语义检索笔记。"
             accent="yellow"
           />
           <FeatureCard
-            icon="💻"
+            icon="disk"
             title="本地优先"
             desc="笔记以 .md 文件形式保存在本地文件夹中，支持任意同步盘或版本控制。"
             accent="blue"
           />
           <FeatureCard
-            icon="🎨"
+            icon="theme"
             title="Mondrian 主题"
             desc="鲜明的三原色与粗黑网格，支持浅色 / 深色模式切换，视觉干脆利落。"
             accent="yellow"
           />
           <FeatureCard
-            icon="⚡"
+            icon="command"
             title="快捷操作"
             desc="Cmd+N 新建、Cmd+O 打开笔记库、Cmd+K 搜索，常用操作一手掌握。"
             accent="red"
           />
+        </div>
+      </section>
+
+      <section className="section section--value">
+        <div className="value-grid reveal">
+          {VALUE_ITEMS.map(([title, desc]) => (
+            <article className="value-item" key={title}>
+              <h3>{title}</h3>
+              <p>{desc}</p>
+            </article>
+          ))}
         </div>
       </section>
 
