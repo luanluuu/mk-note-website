@@ -537,10 +537,11 @@
 .mock-editor__cursor {
   display: inline-block;
   width: 2px;
-  height: 18px;
+  height: 1.1em;
   background: var(--accent);
   animation: blink 1s steps(2, start) infinite;
   vertical-align: middle;
+  margin-left: 1px;
 }
 
 @keyframes blink {

@@ -1,9 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const REPO = 'luanluuu/mk-note'
 const RELEASES = `https://github.com/${REPO}/releases`
-const LATEST = `${RELEASES}/latest`
+
+// 请替换为实际上传到 GitHub Release 的资产文件名。
+// 如果文件名固定（不带版本号），/releases/latest/download/{文件名} 会永远指向最新版本。
+const RELEASE_ASSETS = {
+  mac: 'Markdown-Notes.dmg', // TODO: 替换为实际文件名
+  win: 'Markdown-Notes.exe', // TODO: 替换为实际文件名
+}
+
+function latestAssetUrl(asset: string) {
+  return `https://github.com/${REPO}/releases/latest/download/${encodeURIComponent(asset)}`
+}
 
 type Theme = 'light' | 'dark'
 
@@ -131,8 +141,93 @@ function FeatureCard({
   )
 }
 
+const EDITOR_LINES = [
+  { type: 'h1' as const, text: '项目规划' },
+  { type: 'p' as const, text: '本周重点完成官网设计和 Windows 安装包优化。' },
+  { type: 'li' as const, text: '统一 Mondrian 视觉语言' },
+  { type: 'li' as const, text: '添加交互式功能展示' },
+  { type: 'li' as const, text: '修复 onnxruntime DLL 打包问题' },
+]
+
+const TYPE_SPEED = 45
+const LINE_PAUSE = 600
+
+function TypewriterEditor({ started }: { started: boolean }) {
+  const [currentLine, setCurrentLine] = useState(0)
+  const [display, setDisplay] = useState<string[]>(() => EDITOR_LINES.map(() => ''))
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    if (!started) return
+    if (currentLine >= EDITOR_LINES.length) {
+      setDone(true)
+      return
+    }
+    const text = EDITOR_LINES[currentLine].text
+    let i = 0
+    const timer = window.setInterval(() => {
+      setDisplay((prev) => {
+        const next = [...prev]
+        next[currentLine] = text.slice(0, i)
+        return next
+      })
+      i++
+      if (i > text.length) {
+        window.clearInterval(timer)
+        window.setTimeout(() => setCurrentLine((c) => c + 1), LINE_PAUSE)
+      }
+    }, TYPE_SPEED)
+    return () => window.clearInterval(timer)
+  }, [started, currentLine])
+
+  const cursorIndex = done ? EDITOR_LINES.length - 1 : currentLine
+
+  return (
+    <div className="mock-editor__content">
+      <h1>
+        {display[0]}
+        {cursorIndex === 0 && <span className="mock-editor__cursor" />}
+      </h1>
+      <p>
+        {display[1]}
+        {cursorIndex === 1 && <span className="mock-editor__cursor" />}
+      </p>
+      <ul>
+        <li>
+          {display[2]}
+          {cursorIndex === 2 && <span className="mock-editor__cursor" />}
+        </li>
+        <li>
+          {display[3]}
+          {cursorIndex === 3 && <span className="mock-editor__cursor" />}
+        </li>
+        <li>
+          {display[4]}
+          {cursorIndex === 4 && <span className="mock-editor__cursor" />}
+        </li>
+      </ul>
+    </div>
+  )
+}
+
 function MockWindow({ scrollY }: { scrollY: number }) {
   const offset = scrollY * 0.06
+  const editorRef = useRef<HTMLElement>(null)
+  const [started, setStarted] = useState(false)
+
+  useEffect(() => {
+    const el = editorRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setStarted(true)
+      },
+      { threshold: 0.2 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <div
       className="mock-window reveal"
@@ -166,22 +261,13 @@ function MockWindow({ scrollY }: { scrollY: number }) {
             </li>
           </ul>
         </aside>
-        <main className="mock-editor">
+        <main className="mock-editor" ref={editorRef}>
           <div className="mock-editor__toolbar">
             <span>润色</span>
             <span>续写</span>
             <span>摘要</span>
           </div>
-          <div className="mock-editor__content">
-            <h1>项目规划</h1>
-            <p>本周重点完成官网设计和 Windows 安装包优化。</p>
-            <ul>
-              <li>统一 Mondrian 视觉语言</li>
-              <li>添加交互式功能展示</li>
-              <li>修复 onnxruntime DLL 打包问题</li>
-            </ul>
-            <div className="mock-editor__cursor" />
-          </div>
+          <TypewriterEditor started={started} />
         </main>
       </div>
     </div>
@@ -251,8 +337,11 @@ function App() {
             本地优先的 Markdown 笔记应用。支持 AI 辅助写作、语义搜索与多主题切换，所有数据保存在你的电脑上。
           </p>
           <div className="hero__actions">
-            <DownloadButton label={os === 'mac' ? '下载 macOS 版' : '下载 Windows 版'} href={LATEST} />
-            <DownloadButton label="查看 GitHub" href={`https://github.com/${REPO}`} variant="secondary" />
+            <DownloadButton
+              label={os === 'mac' ? '下载 macOS 版' : '下载 Windows 版'}
+              href={latestAssetUrl(os === 'mac' ? RELEASE_ASSETS.mac : RELEASE_ASSETS.win)}
+            />
+            <DownloadButton label="历史版本" href={RELEASES} variant="secondary" />
           </div>
         </div>
       </header>
@@ -317,12 +406,12 @@ function App() {
             选择适合你系统的版本下载。安装包由 GitHub Releases 托管，完全开源免费。
           </p>
           <div className="download-panel__actions">
-            <DownloadButton label="下载 macOS 版 (.dmg)" href={LATEST} />
-            <DownloadButton label="下载 Windows 版 (.exe)" href={LATEST} variant="secondary" />
+            <DownloadButton label="下载 macOS 版 (.dmg)" href={latestAssetUrl(RELEASE_ASSETS.mac)} />
+            <DownloadButton label="下载 Windows 版 (.exe)" href={latestAssetUrl(RELEASE_ASSETS.win)} variant="secondary" />
           </div>
           <p className="download-panel__hint">
             当前检测到你在使用 {os === 'mac' ? 'macOS' : os === 'win' ? 'Windows' : '未知系统'}，
-            也可以前往 <a href={RELEASES} target="_blank" rel="noreferrer">Releases 页面</a> 手动选择。
+            也可以前往 <a href={RELEASES} target="_blank" rel="noreferrer">Releases 页面</a> 手动选择历史版本。
           </p>
         </div>
       </section>
