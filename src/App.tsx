@@ -7,8 +7,8 @@ const RELEASES = `https://github.com/${REPO}/releases`
 // 请替换为实际上传到 GitHub Release 的资产文件名。
 // 如果文件名固定（不带版本号），/releases/latest/download/{文件名} 会永远指向最新版本。
 const RELEASE_ASSETS = {
-  mac: 'Markdown-Notes.dmg', // TODO: 替换为实际文件名
-  win: 'Markdown-Notes.exe', // TODO: 替换为实际文件名
+  mac: 'Markdown-Notes.dmg',
+  win: 'Markdown-Notes.exe',
 }
 
 function latestAssetUrl(asset: string) {
